@@ -25,6 +25,13 @@ const OPERATOR_ALIASES = {
   '÷': '/',
 };
 
+const PRECEDENCE = {
+  '+': 1,
+  '-': 1,
+  '*': 2,
+  '/': 2,
+};
+
 export const OPERATORS = ['+', '-', '×', '÷'];
 
 export function isOperator(char) {
@@ -69,4 +76,60 @@ function parseNumber(text) {
     throw new CalculatorError(`Número inválido: ${text}`);
   }
   return Number(text);
+}
+
+function applyOperator(a, b, operator) {
+  switch (operator) {
+    case '+':
+      return a + b;
+    case '-':
+      return a - b;
+    case '*':
+      return a * b;
+    case '/':
+      if (b === 0) {
+        throw new CalculatorError('No se puede dividir entre cero');
+      }
+      return a / b;
+    default:
+      throw new CalculatorError(`Operador desconocido: ${operator}`);
+  }
+}
+
+/**
+ * Evalúa una expresión y regresa el resultado numérico.
+ * Usa dos pilas (números y operadores) para respetar la jerarquía:
+ * multiplicación y división antes que suma y resta.
+ */
+export function evaluate(expression) {
+  const tokens = tokenize(expression);
+  const values = [];
+  const operators = [];
+
+  const reduce = () => {
+    const operator = operators.pop();
+    const b = values.pop();
+    const a = values.pop();
+    values.push(applyOperator(a, b, operator));
+  };
+
+  for (const token of tokens) {
+    if (typeof token === 'number') {
+      values.push(token);
+    } else {
+      while (
+        operators.length > 0 &&
+        PRECEDENCE[operators[operators.length - 1]] >= PRECEDENCE[token]
+      ) {
+        reduce();
+      }
+      operators.push(token);
+    }
+  }
+
+  while (operators.length > 0) {
+    reduce();
+  }
+
+  return values[0];
 }
