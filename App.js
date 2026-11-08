@@ -1,11 +1,46 @@
+
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
 
 export default function App() {
   return (
     <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
+      <StatusBar style="light" />
+
+      <View style={styles.header}>
+        <Text style={styles.title}>Calculadora Scrum</Text>
+      </View>
+
+      <View style={styles.display}>
+        <Text style={styles.operation}>0</Text>
+        <Text style={styles.result}>0</Text>
+      </View>
+
+      <View style={styles.keyboard}>
+        {[
+          ['AC', '⌫', '%', '÷'],
+          ['7', '8', '9', '×'],
+          ['4', '5', '6', '−'],
+          ['1', '2', '3', '+'],
+          ['±', '0', '.', '='],
+        ].map((row, rowIndex) => (
+          <View key={rowIndex} style={styles.buttonRow}>
+            {row.map((key) => (
+              <View
+                key={key}
+                style={[
+                  styles.button,
+                  ['÷', '×', '−', '+', '='].includes(key) &&
+                    styles.operatorButton,
+                  key === 'AC' && styles.clearButton,
+                ]}
+              >
+                <Text style={styles.buttonText}>{key}</Text>
+              </View>
+            ))}
+          </View>
+        ))}
+      </View>
     </View>
   );
 }
@@ -13,8 +48,59 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#101218',
+    paddingHorizontal: 20,
+    paddingTop: 65,
+    paddingBottom: 35,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  title: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  display: {
+    flex: 1,
+    alignItems: 'flex-end',
+    justifyContent: 'flex-end',
+    paddingBottom: 30,
+  },
+  operation: {
+    color: '#9297A3',
+    fontSize: 26,
+  },
+  result: {
+    color: '#FFFFFF',
+    fontSize: 58,
+    fontWeight: 'bold',
+  },
+  keyboard: {
+    gap: 12,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  button: {
+    flex: 1,
+    height: 65,
+    borderRadius: 18,
+    backgroundColor: '#292D38',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  operatorButton: {
+    backgroundColor: '#375B95',
+  },
+  clearButton: {
+    backgroundColor: '#A44444',
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 25,
+    fontWeight: '600',
   },
 });
