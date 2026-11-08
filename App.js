@@ -1,8 +1,43 @@
 
+import { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  Pressable,
+} from 'react-native';
 
 export default function App() {
+  const [operation, setOperation] = useState('');
+
+  const handleKeyPress = (key) => {
+    // La lógica de AC y = se implementará después.
+    if (key === 'AC' || key === '=') {
+      return;
+    }
+
+    // Evitar más de un punto decimal por número.
+    if (key === '.') {
+      const currentNumber = operation.split(/[+\−×÷]/).pop();
+
+      if (currentNumber.includes('.')) {
+        return;
+      }
+    }
+
+    // Agregar el número u operador a la pantalla.
+    setOperation((previous) => previous + key);
+  };
+
+  const keys = [
+    ['AC', '⌫', '%', '÷'],
+    ['7', '8', '9', '×'],
+    ['4', '5', '6', '−'],
+    ['1', '2', '3', '+'],
+    ['±', '0', '.', '='],
+  ];
+
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
@@ -12,31 +47,30 @@ export default function App() {
       </View>
 
       <View style={styles.display}>
-        <Text style={styles.operation}>0</Text>
+        <Text style={styles.operation}>
+          {operation || '0'}
+        </Text>
+
         <Text style={styles.result}>0</Text>
       </View>
 
       <View style={styles.keyboard}>
-        {[
-          ['AC', '⌫', '%', '÷'],
-          ['7', '8', '9', '×'],
-          ['4', '5', '6', '−'],
-          ['1', '2', '3', '+'],
-          ['±', '0', '.', '='],
-        ].map((row, rowIndex) => (
+        {keys.map((row, rowIndex) => (
           <View key={rowIndex} style={styles.buttonRow}>
             {row.map((key) => (
-              <View
+              <Pressable
                 key={key}
-                style={[
+                onPress={() => handleKeyPress(key)}
+                style={({ pressed }) => [
                   styles.button,
                   ['÷', '×', '−', '+', '='].includes(key) &&
                     styles.operatorButton,
                   key === 'AC' && styles.clearButton,
+                  pressed && styles.pressedButton,
                 ]}
               >
                 <Text style={styles.buttonText}>{key}</Text>
-              </View>
+              </Pressable>
             ))}
           </View>
         ))}
@@ -97,6 +131,9 @@ const styles = StyleSheet.create({
   },
   clearButton: {
     backgroundColor: '#A44444',
+  },
+  pressedButton: {
+    opacity: 0.6,
   },
   buttonText: {
     color: '#FFFFFF',
