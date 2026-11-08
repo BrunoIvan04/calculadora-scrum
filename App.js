@@ -8,25 +8,42 @@ import {
   Pressable,
 } from 'react-native';
 
+import { evaluate } from './src/logic/calculator';
+
 export default function App() {
   const [operation, setOperation] = useState('');
 
   const handleKeyPress = (key) => {
-    // La lógica de AC y = se implementará después.
-    if (key === 'AC' || key === '=') {
+    // Calcular el resultado al presionar =
+    if (key === '=') {
+      const result = evaluate(operation);
+      setOperation(result);
       return;
     }
 
-    // Evitar más de un punto decimal por número.
+    // AC se implementará en la siguiente tarea.
+    if (key === 'AC') {
+      return;
+    }
+
+    // Evitar varios puntos decimales en un mismo número.
     if (key === '.') {
-      const currentNumber = operation.split(/[+\−×÷]/).pop();
+      const currentNumber = operation.split(/[+−×÷]/).pop();
 
       if (currentNumber.includes('.')) {
         return;
       }
     }
 
-    // Agregar el número u operador a la pantalla.
+    // Evitar agregar números después de un error.
+    if (operation === 'Error') {
+      if (/^[0-9.]$/.test(key)) {
+        setOperation(key);
+      }
+      return;
+    }
+
+    // Agregar números y operadores a la pantalla.
     setOperation((previous) => previous + key);
   };
 
