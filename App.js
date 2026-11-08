@@ -14,19 +14,25 @@ export default function App() {
   const [operation, setOperation] = useState('');
 
   const handleKeyPress = (key) => {
-    // Calcular el resultado al presionar =
+    // SCRUM-21: Limpiar toda la calculadora.
+    if (key === 'AC') {
+      setOperation('');
+      return;
+    }
+
+    // SCRUM-20: Calcular el resultado.
     if (key === '=') {
       const result = evaluate(operation);
       setOperation(result);
       return;
     }
 
-    // AC se implementará en la siguiente tarea.
-    if (key === 'AC') {
+    // La función de borrar corresponde a SCRUM-22.
+    if (key === '⌫') {
       return;
     }
 
-    // Evitar varios puntos decimales en un mismo número.
+    // Evitar varios puntos decimales en un número.
     if (key === '.') {
       const currentNumber = operation.split(/[+−×÷]/).pop();
 
@@ -35,7 +41,7 @@ export default function App() {
       }
     }
 
-    // Evitar agregar números después de un error.
+    // Reiniciar la captura después de un error.
     if (operation === 'Error') {
       if (/^[0-9.]$/.test(key)) {
         setOperation(key);
@@ -43,7 +49,7 @@ export default function App() {
       return;
     }
 
-    // Agregar números y operadores a la pantalla.
+    // Agregar números y operadores.
     setOperation((previous) => previous + key);
   };
 
@@ -60,7 +66,9 @@ export default function App() {
       <StatusBar style="light" />
 
       <View style={styles.header}>
-        <Text style={styles.title}>Calculadora Scrum</Text>
+        <Text style={styles.title}>
+          Calculadora Scrum
+        </Text>
       </View>
 
       <View style={styles.display}>
@@ -68,7 +76,9 @@ export default function App() {
           {operation || '0'}
         </Text>
 
-        <Text style={styles.result}>0</Text>
+        <Text style={styles.result}>
+          0
+        </Text>
       </View>
 
       <View style={styles.keyboard}>
@@ -86,7 +96,9 @@ export default function App() {
                   pressed && styles.pressedButton,
                 ]}
               >
-                <Text style={styles.buttonText}>{key}</Text>
+                <Text style={styles.buttonText}>
+                  {key}
+                </Text>
               </Pressable>
             ))}
           </View>
