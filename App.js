@@ -9,26 +9,50 @@ import {
 } from 'react-native';
 
 import { evaluate } from './src/logic/calculator';
+import { deleteLastChar } from './src/logic/input';
+
+// Teclas que todavía no tienen funcionalidad en este Sprint.
+const PENDING_KEYS = ['%', '±'];
 
 export default function App() {
+  // Operación que el usuario está capturando (RF-04).
   const [operation, setOperation] = useState('');
+  // Último resultado, mostrado en un área independiente (RF-05).
+  const [result, setResult] = useState('0');
 
   const handleKeyPress = (key) => {
-    // SCRUM-21: Limpiar toda la calculadora.
+    // SCRUM-21: limpiar captura y resultado.
     if (key === 'AC') {
+      setOperation('');
+      setResult('0');
+      return;
+    }
+
+    // SCRUM-20: calcular con la lógica de SCRUM-16, mostrar
+    // operación y resultado, y limpiar la captura (RF-06, RF-13).
+    if (key === '=') {
+      if (!operation) {
+        return;
+      }
+
+      try {
+        const value = evaluate(operation);
+        setResult(`${operation} = ${value}`);
+      } catch (error) {
+        setResult(error.message);
+      }
+
       setOperation('');
       return;
     }
 
-    // SCRUM-20: Calcular el resultado.
-    if (key === '=') {
-      const result = evaluate(operation);
-      setOperation(result);
+    // SCRUM-22: borrar el último carácter capturado.
+    if (key === '⌫') {
+      setOperation((previous) => deleteLastChar(previous));
       return;
     }
 
-    // La función de borrar corresponde a SCRUM-22.
-    if (key === '⌫') {
+    if (PENDING_KEYS.includes(key)) {
       return;
     }
 
@@ -39,14 +63,6 @@ export default function App() {
       if (currentNumber.includes('.')) {
         return;
       }
-    }
-
-    // Reiniciar la captura después de un error.
-    if (operation === 'Error') {
-      if (/^[0-9.]$/.test(key)) {
-        setOperation(key);
-      }
-      return;
     }
 
     // Agregar números y operadores.
@@ -76,8 +92,8 @@ export default function App() {
           {operation || '0'}
         </Text>
 
-        <Text style={styles.result}>
-          0
+        <Text style={styles.result} numberOfLines={2} adjustsFontSizeToFit>
+          {result}
         </Text>
       </View>
 
