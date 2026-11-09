@@ -1,89 +1,135 @@
+/**
+ * Lógica de la calculadora.
+ *
+ * Evalúa expresiones capturadas por el usuario (por ejemplo "2+3×4")
+ * respetando la jerarquía de operaciones. Está separada de la interfaz
+ * para poder probarla de forma independiente.
+ */
 
+export class CalculatorError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'CalculatorError';
+  }
+}
+
+// Símbolos que se muestran en el teclado y su equivalente interno.
+const OPERATOR_ALIASES = {
+  '+': '+',
+  '-': '-',
+  '−': '-',
+  '*': '*',
+  '×': '*',
+  'x': '*',
+  '/': '/',
+  '÷': '/',
+};
+
+const PRECEDENCE = {
+  '+': 1,
+  '-': 1,
+  '*': 2,
+  '/': 2,
+};
+
+export const OPERATORS = ['+', '-', '×', '÷'];
+
+export function isOperator(char) {
+  return Object.prototype.hasOwnProperty.call(OPERATOR_ALIASES, char);
+}
+
+/**
+ * Convierte la cadena capturada en una lista de tokens (números y operadores).
+ */
+export function tokenize(expression) {
+  if (typeof expression !== 'string' || expression.trim() === '') {
+    throw new CalculatorError('No hay ninguna operación para calcular');
+  }
+
+  const tokens = [];
+  let current = '';
+
+  for (const char of expression.replace(/\s+/g, '')) {
+    if (/[0-9.]/.test(char)) {
+      current += char;
+    } else if (isOperator(char)) {
+      if (current === '') {
+        throw new CalculatorError('Operación inválida');
+      }
+      tokens.push(parseNumber(current));
+      tokens.push(OPERATOR_ALIASES[char]);
+      current = '';
+    } else {
+      throw new CalculatorError(`Carácter no válido: ${char}`);
+    }
+  }
+
+  if (current === '') {
+    throw new CalculatorError('La operación no puede terminar en un operador');
+  }
+  tokens.push(parseNumber(current));
+  return tokens;
+}
+
+function parseNumber(text) {
+  if ((text.match(/\./g) || []).length > 1 || text === '.') {
+    throw new CalculatorError(`Número inválido: ${text}`);
+  }
+  return Number(text);
+}
+
+function applyOperator(a, b, operator) {
+  switch (operator) {
+    case '+':
+      return a + b;
+    case '-':
+      return a - b;
+    case '*':
+      return a * b;
+    case '/':
+      if (b === 0) {
+        throw new CalculatorError('No se puede dividir entre cero');
+      }
+      return a / b;
+    default:
+      throw new CalculatorError(`Operador desconocido: ${operator}`);
+  }
+}
+
+/**
+ * Evalúa una expresión y regresa el resultado numérico.
+ * Usa dos pilas (números y operadores) para respetar la jerarquía:
+ * multiplicación y división antes que suma y resta.
+ */
 export function evaluate(expression) {
-  if (!expression || !expression.trim()) {
-    return '0';
-  }
+  const tokens = tokenize(expression);
+  const values = [];
+  const operators = [];
 
-  try {
-    const normalized = expression
-      .replace(/×/g, '*')
-      .replace(/÷/g, '/')
-      .replace(/−/g, '-')
-      .replace(/\s/g, '');
+  const reduce = () => {
+    const operator = operators.pop();
+    const b = values.pop();
+    const a = values.pop();
+    values.push(applyOperator(a, b, operator));
+  };
 
-    const tokens = normalized.match(
-      /(?:\d+(?:\.\d*)?|\.\d+)|[+\-*/]/g
-    );
-
-    if (!tokens || tokens.join('') !== normalized) {
-      return 'Error';
-    }
-
-    const values = [];
-    const operators = [];
-
-    for (let i = 0; i < tokens.length; i++) {
-      const token = tokens[i];
-
-      if (
-        token === '-' &&
-        (i === 0 || ['+', '-', '*', '/'].includes(tokens[i - 1]))
+  for (const token of tokens) {
+    if (typeof token === 'number') {
+      values.push(token);
+    } else {
+      while (
+        operators.length > 0 &&
+        PRECEDENCE[operators[operators.length - 1]] >= PRECEDENCE[token]
       ) {
-        const next = tokens[++i];
-
-        if (!next || !/^(?:\d+(?:\.\d*)?|\.\d+)$/.test(next)) {
-          return 'Error';
-        }
-
-        values.push(-Number(next));
-      } else if (/^(?:\d+(?:\.\d*)?|\.\d+)$/.test(token)) {
-        values.push(Number(token));
-      } else {
-        operators.push(token);
+        reduce();
       }
+      operators.push(token);
     }
-
-    if (values.length !== operators.length + 1) {
-      return 'Error';
-    }
-
-    // Primero multiplicaciones y divisiones.
-    for (let i = 0; i < operators.length; ) {
-      if (operators[i] === '*' || operators[i] === '/') {
-        const a = values[i];
-        const b = values[i + 1];
-
-        if (operators[i] === '/' && b === 0) {
-          return 'Error';
-        }
-
-        const result =
-          operators[i] === '*' ? a * b : a / b;
-
-        values.splice(i, 2, result);
-        operators.splice(i, 1);
-      } else {
-        i++;
-      }
-    }
-
-    // Después sumas y restas.
-    let result = values[0];
-
-    for (let i = 0; i < operators.length; i++) {
-      if (operators[i] === '+') {
-        result += values[i + 1];
-      } else if (operators[i] === '-') {
-        result -= values[i + 1];
-      } else {
-        return 'Error';
-      }
-    }
-
-    return Number.isFinite(result)
-      ? String(Number(result.toFixed(10)))
-      : 'Error';
-  } catch (error) {
-    return 'Error';
   }
+
+  while (operators.length > 0) {
+    reduce();
+  }
+
+  return values[0];
 }
